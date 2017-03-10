@@ -42,71 +42,57 @@ controlLayers.addBaseLayer(lightNoLabels, 'CartoDB Light no labels');
 
 /* POLYGON OVERLAYS */
 
-$.getJSON("src/CT-tracts-2010-MAGIC.geojson", function (data) {   // insert pathname to your local directory file
-  var geoJsonLayer = L.geoJson(data, {
-    style: function (feature) {
-      return {
-        'color': 'green',
-        'weight': 2,
-        'fillColor': 'green',
-        'fillOpacity': 0.2
-      }
-    },
-    onEachFeature: function( feature, layer) {
-      layer.bindPopup(feature.properties.name) // change 'name' to match your geojson property labels
-    }
-  }).addTo(map);  // insert ".addTo(map)" to display layer by default
-  controlLayers.addOverlay(geoJsonLayer, 'Tracts 2010 (green)');  // insert your 'Title' to add to legend
-});
+geoJsonLayers = [
+  {
+    title: 'Tracts 2010 (green)',
+    source: 'src/CT-tracts-2010-MAGIC.geojson',
+    style: {'color': 'green', 'weight': 2, 'fillColor': 'green', 'fillOpacity': 0.2}
+  },
+  {
+    title: 'Hartford neighborhoods (not census) (orange)',
+    source: 'src/Hartford-neighborhoods-2015-HartData.geojson',
+    style: {'color': 'orange', 'weight': 2, 'fillColor': 'orange', 'fillOpacity': 0.2}
+  },
+  {
+    title: 'Towns 2010 (red)',
+    source: 'src/CT-towns-2010-MAGIC.geojson',
+    style: {'color': 'red', 'weight': 2, 'fillColor': 'red', 'fillOpacity': 0.2}
+  },
+  {
+    title: 'Counties 2010 (blue)',
+    source: 'src/CT-towns-2010-MAGIC.geojson',
+    style: {'color': 'blue', 'weight': 2, 'fillColor': 'blue', 'fillOpacity': 0.2}
+  }
+];
 
-$.getJSON("src/Hartford-neighborhoods-2015-HartData.geojson", function (data) {   // insert pathname to your local directory file
-  var geoJsonLayer = L.geoJson(data, {
-    style: function (feature) {
-      return {
-        'color': 'orange',
-        'weight': 2,
-        'fillColor': 'orange',
-        'fillOpacity': 0.2
-      }
-    },
-    onEachFeature: function( feature, layer) {
-      layer.bindPopup(feature.properties.name) // change 'name' to match your geojson property labels
-    }
-  }).addTo(map);  // insert ".addTo(map)" to display layer by default
-  controlLayers.addOverlay(geoJsonLayer, 'Hartford neighborhoods (not census) (orange)');  // insert your 'Title' to add to legend
-});
+/**
+ * Recursive function to go through the
+ */
+function addGeoJsonLayer(geoJsonLayers) {
+  // Stop recursion if no layers left
+  if (geoJsonLayers.length == 0) return;
 
-$.getJSON("src/CT-towns-2010-MAGIC.geojson", function (data) {   // insert pathname to your local directory file
-  var geoJsonLayer = L.geoJson(data, {
-    style: function (feature) {
-      return {
-        'color': 'red',
-        'weight': 2,
-        'fillColor': 'red',
-        'fillOpacity': 0.2
+  // Load the geojson file from source specified
+  $.getJSON(geoJsonLayers[0].source, function(data) {
+    var geoJsonLayer = L.geoJson(data, {
+      style: function (feature) {
+        return geoJsonLayers[0].style;
+      },
+      onEachFeature: function(feature, layer) {
+        layer.bindPopup(feature.properties.name); // change 'name' to match your geojson property labels
       }
-    },
-    onEachFeature: function( feature, layer) {
-      layer.bindPopup(feature.properties.name) // change 'name' to match your geojson property labels
-    }
-  }).addTo(map);  // insert ".addTo(map)" to display layer by default
-  controlLayers.addOverlay(geoJsonLayer, 'Towns 2010 (red)');  // insert your 'Title' to add to legend
-});
+    }).addTo(map);
 
-// load polygon data with clickable features from local directory
-$.getJSON("src/CT-counties-2010-MAGIC.geojson", function (data) {   // insert pathname to your local directory file
-  var geoJsonLayer = L.geoJson(data, {
-    style: function (feature) {
-      return {
-        'color': 'blue',
-        'weight': 2,
-        'fillColor': 'blue',
-        'fillOpacity': 0.2
-      }
-    },
-    onEachFeature: function( feature, layer) {
-      layer.bindPopup(feature.properties.name) // change 'name' to match your geojson property labels
-    }
-  }).addTo(map);  // insert ".addTo(map)" to display layer by default
-  controlLayers.addOverlay(geoJsonLayer, 'Counties 2010 (blue)');  // insert your 'Title' to add to legend
-});
+    // Add name of the layer to the layers control (legend)
+    controlLayers.addOverlay(geoJsonLayer, geoJsonLayers[0].title);
+
+    // Remove the layer from the array
+    geoJsonLayers.shift();
+
+    // Call the same function and pass the remaining layers
+    addGeoJsonLayer(geoJsonLayers);
+  });
+}
+
+// Call the function for the first time, with all layers to be added
+addGeoJsonLayer(geoJsonLayers);
